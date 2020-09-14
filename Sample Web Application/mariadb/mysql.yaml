@@ -1,0 +1,49 @@
+- name: "Install and configure mysql"
+  hosts: ansible_slave
+  become: true
+  tasks:
+    - name: "Install mariadb server"
+      yum:
+          name: mariadb-server
+          state: present
+
+    - name: "Start and enable mariadb"
+      service:
+         name: mariadb
+         state: started
+         enabled: yes
+
+    - name: "Installing pip"
+      yum:
+        name: python2-pip
+        state: present
+
+    - name: "Installing pymysql for dependency"
+      pip:
+       name: pymysql
+       state: present
+
+    - name: "Create database"
+      mysql_db:
+        name: ecomdb
+        state: present
+
+    - name: "Create Users and grant privileges"
+      mysql_user:
+         name: ecomuser
+         host: localhost
+         password: ecompassword
+         priv: '*.*:ALL'
+         state: present
+
+    - name: "Copy DB dump file to remote host"
+      copy:
+        src: /root/projects/mariadb/db-load-script.sql
+        dest: /tmp
+
+
+    - name: "Restore Database"
+      mysql_db:
+        name: ecomdb
+        state: import
+        target: /tmp/db-load-script.sql

@@ -1,0 +1,16 @@
+- name: "Install and clone git repo"
+  hosts: ansible_slave
+  become: true
+  tasks:
+     - name: "Install git"
+       yum:
+          name: git
+          state: present
+
+     - name: "Clone repo"
+       git:
+         repo: https://github.com/kodekloudhub/learning-app-ecommerce.git
+         dest: /var/www/html/
+
+     - name: "Update index.php with new IP"
+       command: sudo sed -i 's/x.x.x.x/localhost/g' /var/www/html/index.php

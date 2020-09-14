@@ -1,0 +1,125 @@
+-
+
+  name: Deploy a web application
+
+  hosts: slave1
+
+  become: true
+  vars:
+
+       db_name: employee_db
+
+       db_user: db_user
+
+       db_password: Passw0rd
+
+  tasks:
+
+    - name: Install epel repo
+      yum:
+        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+        state: present
+
+    - name: Install dependencies
+      yum:
+       name: "{{ item }}"
+       enablerepo: epel
+       state: present
+
+      with_items:
+       - python
+       - python-setuptools
+       - python-devel
+       - gcc
+       - python-pip
+
+
+
+    - name: Install MySQL database
+      yum:
+
+        name: "{{ item }}"
+        enablerepo: epel
+        state:  present
+
+      with_items:
+
+       - mariadb-server
+
+#       - mysql57-client
+
+
+
+    - name: Start Mysql Service
+
+      service:
+
+        name: mariadb
+
+        state: started
+
+        enabled: yes
+
+    - name: "Installing pip"
+      yum:
+        name: python2-pip
+        state: present
+
+    - name: "Installing pymysql for dependency"
+      pip:
+       name: pymysql
+       state: present
+
+    - name: Create Application Database
+
+      mysql_db:
+
+       name: '{{ db_name }}'
+
+       state: present
+
+
+
+
+
+    - name: Create Application DB User
+
+      mysql_user:
+
+       name: '{{ db_user }}'
+
+       password: '{{ db_password }}'
+
+       priv: '*.*:ALL'
+
+       host: 'localhost'
+
+       state: present
+
+
+
+    - name: Install Python Flask dependencies
+
+      pip:
+
+        name: "{{ item }}"
+
+        state: present
+
+      with_items:
+
+       - flask
+
+       - flask-mysql
+
+
+
+    - name: Copy web-server code
+
+      copy: src=app.py dest=/opt/app.py
+
+
+
+    - name: Start web-application
+
+      shell: FLASK_APP=/opt/app.py nohup flask run --host=0.0.0.0 &

@@ -1,0 +1,22 @@
+- name: "Install and configure web server"
+  hosts: ansible_slave
+  become: true
+  tasks:
+     - name: "Install required packages"
+       vars:
+         packages:
+            - httpd
+            - php
+            - php-mysql
+       yum:
+         name: "{{packages}}"
+         state: present
+
+     - name: "Update directory index"
+       command: sudo sed -i 's/index.html/index.php/g' /etc/httpd/conf/httpd.conf
+
+     - name: "Start httpd"
+       service:
+         name: httpd
+         state: started
+         enabled: yes
